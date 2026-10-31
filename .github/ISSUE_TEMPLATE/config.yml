@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: インストール手順と設定 / Install and settings (README)
+    url: https://github.com/kumatch/hdt-plugin-hsbg-kansousen#readme
+    about: プラグインが一覧に出ないとき（ブロックの解除）などは README を見てください
+  - name: ログの仕様 / Log schema
+    url: https://github.com/kumatch/hdt-plugin-hsbg-kansousen/blob/main/docs/log-schema.md
+    about: 記録の各キーの意味

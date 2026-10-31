@@ -1,0 +1,26 @@
+name: 要望 / Feature request
+description: 記録してほしい情報、設定、使い勝手など / Data to record, settings, usability
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        日本語でも英語でもかまいません（Japanese or English is fine）。
+        このプラグインはローカルのファイルにだけ書きます。外部への送信や、BattleTag・プレイヤー名を記録する要望には応えられません。
+        The plugin only writes local files; it will not send data anywhere or record BattleTags / player names.
+
+  - type: textarea
+    id: want
+    attributes:
+      label: ほしいもの / What you want
+      description: 何を記録したい・できるようにしたいか
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: 使いみち / Why
+      description: その情報で何を分析・確認したいか
+    validations:
+      required: false
