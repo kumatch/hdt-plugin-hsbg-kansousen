@@ -61,6 +61,21 @@ cd ..
 HDT を起動し、Options > Tracker > Plugins で「HsbgKansousen」を有効にします。プラグイン自身のログは
 `%APPDATA%\HearthstoneDeckTracker\HsbgKansousen\plugin.log` です。
 
+### リリースの手順
+
+1. `plugin/HsbgKansousen/HsbgKansousen.csproj` の `<Version>` を上げ、検証コマンドと `python scripts\check_private.py` を緑にして**コミットする**
+   （DLL の製品バージョンには、ビルドした時点の HEAD のコミットが `0.11.0+<commit>` の形で入る。コミット前にビルドすると、1 つ前のコミットを名乗る）
+2. `git tag v<version>; git push origin main v<version>`
+3. `.\scripts\package-plugin.ps1` → `dist\HsbgKansousen-<version>.zip`。`schema\game-log.schema.json` を `dist\` に写し、2 つの SHA-256 を `SHA256SUMS.txt` に書く
+   （`<hash>  <ファイル名>` の形。`(Get-FileHash <file> -Algorithm SHA256).Hash.ToLower()`）
+4. 実機の確認は zip で行う: HDT を終了して `Plugins\HsbgKansousen\` を消し、Options > Tracker > Plugins に zip をドロップして 1 ゲーム遊ぶ。
+   ビルドは決定的（`Deterministic` + `PathMap`）なので、同じコミットからなら `deploy-plugin.ps1` の DLL も zip の DLL とバイト単位で同じになる
+5. GitHub の Releases でタグを選び、zip、`game-log.schema.json`、`SHA256SUMS.txt` を添付する。リリースノートには
+   ビルドに使った HDT のバージョン、`schema_version`、変更点、インストール手順を書く
+
+DLL に手元の絶対パス（ユーザー名を含む）が入らないよう、`plugin/Directory.Build.props` の `PathMap` で `/_/` に置き換えている
+（PDB のパスと、HDT の `Log.*` の `[CallerFilePath]` が入れるパス）。`package-plugin.ps1` は手元のパスが残っていると止まる。
+
 ## 4. Claude Code（任意）
 
 このリポジトリは Claude Code での開発を前提に `CLAUDE.md` / `TASKS.md` を置いています。

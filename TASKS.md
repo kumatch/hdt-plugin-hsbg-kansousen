@@ -11,12 +11,13 @@
 ## 現在の状態
 
 - プラグイン v0.11.0（0.10.x までの名前は HsbgLogger）、ログ schema 1.6.2。動作確認した HDT: 1.59.x
-- 公開の準備中（最初のリリース前）
+- 公開の準備中。v0.11.0 を GitHub Releases に置いた（2026-10-31、HDT 1.59.7 でビルド）。リポジトリの public 化はまだ
 
 ## タスク
 
-- [ ] 最初のリリース: `package-plugin.ps1` の zip、`SHA256SUMS.txt`、`game-log.schema.json` を GitHub Releases に置く。
+- [x] 最初のリリース: `package-plugin.ps1` の zip、`SHA256SUMS.txt`、`game-log.schema.json` を GitHub Releases に置く。
       リリースノートに「ビルドに使った HDT のバージョン」「schema_version」「変更点」「インストール手順」を書く
+      （v0.11.0。zip を README の手順で入れて 1 ゲーム確認済み。手順は docs/development.md「リリースの手順」）
 - [x] CI（`.github/workflows/checks.yml`）: check_private と schema の JSON の検査（ビルドは下のタスク）
 - [ ] リリースの CI 化: GitHub Actions（windows-latest）で HDT の配布物を取得して参照し、build + test + package。
       **要検証**: HDT-Releases の `*-full.nupkg` が各版にあり、中に `HearthstoneDeckTracker.exe` と参照 DLL が揃うか。
