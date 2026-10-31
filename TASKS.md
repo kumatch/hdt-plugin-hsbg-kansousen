@@ -21,6 +21,10 @@
 - [ ] リリースの CI 化: GitHub Actions（windows-latest）で HDT の配布物を取得して参照し、build + test + package。
       **要検証**: HDT-Releases の `*-full.nupkg` が各版にあり、中に `HearthstoneDeckTracker.exe` と参照 DLL が揃うか。
       HDT のバイナリはリポジトリにもリリースにも入れない（HDT のライセンスは All Rights Reserved）
+- [ ] Visual Studio の無い Windows で、docs/development.md の手順だけで build / test が通るか確かめる（net472 の参照アセンブリ）
+- [ ] Issue テンプレート: HDT とプラグインの版、`plugin.log` の該当部分。**`*.power.log.gz` は貼らない**（ロビー全員の BattleTag が入る）。
+      ログを添えるときは `scripts/anonymize_log.py` を通した `.json` だけ
+- [ ] 公開: リポジトリを public にする（最初のリリースと、README の手順の確認の後）。HDT Wiki の Available Plugins への掲載依頼は任意
 - [ ] 設定画面に「リリースページを開く」リンク（更新の確認。自動の照会は外部通信になるので入れるなら既定 OFF）
 
 ## 判明したこと・決めたこと
