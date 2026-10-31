@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <OutputType>Library</OutputType>
+    <RootNamespace>HsbgKansousen</RootNamespace>
+    <AssemblyName>HsbgKansousen</AssemblyName>
+    <Version>0.11.0</Version>
+    <Authors>kumatch</Authors>
+    <Product>HsbgKansousen</Product>
+    <Description>Hearthstone Battlegrounds game logger plugin for Hearthstone Deck Tracker</Description>
+    <!-- HDT 本体が x64 なので合わせる (AnyCPU でも動くが MSB3270 警告が出る) -->
+    <PlatformTarget>x64</PlatformTarget>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <DebugType>portable</DebugType>
+    <!-- HDT 同梱アセンブリは出力フォルダにコピーしない (Private=false) -->
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <!-- HsbgHdtReference / HsbgHdtFile: HdtPath を自動検出したとき Directory.Build.props が HintPath を張り替える -->
+  <ItemGroup>
+    <Reference Include="HearthstoneDeckTracker">
+      <HintPath>$(HdtPath)\HearthstoneDeckTracker.exe</HintPath>
+      <Private>false</Private>
+      <HsbgHdtReference>true</HsbgHdtReference>
+      <HsbgHdtFile>HearthstoneDeckTracker.exe</HsbgHdtFile>
+    </Reference>
+    <Reference Include="HearthDb">
+      <HintPath>$(HdtPath)\HearthDb.dll</HintPath>
+      <Private>false</Private>
+      <HsbgHdtReference>true</HsbgHdtReference>
+      <HsbgHdtFile>HearthDb.dll</HsbgHdtFile>
+    </Reference>
+    <!-- MetaData.ServerInfo（GameServerInfo.GameHandle）の型。再接続の判定に使う（P-22） -->
+    <Reference Include="HearthMirror">
+      <HintPath>$(HdtPath)\HearthMirror.dll</HintPath>
+      <Private>false</Private>
+      <HsbgHdtReference>true</HsbgHdtReference>
+      <HsbgHdtFile>HearthMirror.dll</HsbgHdtFile>
+    </Reference>
+    <!-- 設定画面のフォルダ選択（FolderBrowserDialog）。.NET Framework の GAC にあるので同梱しない -->
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(HdtPath)\Newtonsoft.Json.dll</HintPath>
+      <Private>false</Private>
+      <HsbgHdtReference>true</HsbgHdtReference>
+      <HsbgHdtFile>Newtonsoft.Json.dll</HsbgHdtFile>
+    </Reference>
+  </ItemGroup>
+
+</Project>

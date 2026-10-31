@@ -1,0 +1,64 @@
+<Project>
+  <!--
+    HDT のインストール先。環境差を吸収するため、参照 (HintPath) はすべてこのプロパティ経由にする。
+    優先順位: dotnet build -p:HdtPath=... > 環境変数 HDT_PATH > %LOCALAPPDATA%\HearthstoneDeckTracker\app-* の最新版（自動検出）
+    HDT は自動更新のたびに古い app-* を消すので、既定値をバージョン固定にしない。
+    自動検出はビルド時のターゲット HsbgDetectHdtPath で行い（評価時のプロパティ関数ではバージョン順に並べられないため）、
+    HDT の参照（HsbgHdtReference="true"）の HintPath を書き換える。scripts\deploy-plugin.ps1 と同じ選び方。
+  -->
+  <PropertyGroup>
+    <HdtPath Condition="'$(HdtPath)' == '' and '$(HDT_PATH)' != ''">$(HDT_PATH)</HdtPath>
+    <HsbgHdtRoot>$(LOCALAPPDATA)\HearthstoneDeckTracker</HsbgHdtRoot>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <LangVersion>10</LangVersion>
+    <Nullable>enable</Nullable>
+    <Deterministic>true</Deterministic>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!--
+    app-* のうち HearthstoneDeckTracker.exe があり、バージョンが最大のフォルダを返す（1.58.10 > 1.58.9）。
+    MSBuild のプロパティのバッチ処理では値が要素ごとに先に展開されて最大値を取れないので、インラインタスクで比べる。
+  -->
+  <UsingTask TaskName="HsbgFindLatestHdt" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Root ParameterType="System.String" Required="true" />
+      <Path ParameterType="System.String" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        Path = "";
+        System.Version best = null;
+        if (System.IO.Directory.Exists(Root))
+        {
+            foreach (var dir in System.IO.Directory.GetDirectories(Root, "app-*"))
+            {
+                System.Version v;
+                if (!System.Version.TryParse(System.IO.Path.GetFileName(dir).Substring(4), out v)) continue;
+                if (!System.IO.File.Exists(System.IO.Path.Combine(dir, "HearthstoneDeckTracker.exe"))) continue;
+                if (best == null || v > best) { best = v; Path = dir; }
+            }
+        }
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="HsbgDetectHdtPath" BeforeTargets="ResolveAssemblyReferences" Condition="'$(HdtPath)' == ''">
+    <HsbgFindLatestHdt Root="$(HsbgHdtRoot)">
+      <Output TaskParameter="Path" PropertyName="HdtPath" />
+    </HsbgFindLatestHdt>
+    <ItemGroup>
+      <Reference Condition="'%(Reference.HsbgHdtReference)' == 'true'">
+        <HintPath>$(HdtPath)\%(Reference.HsbgHdtFile)</HintPath>
+      </Reference>
+    </ItemGroup>
+  </Target>
+
+  <Target Name="HsbgCheckHdtPath" BeforeTargets="ResolveAssemblyReferences" DependsOnTargets="HsbgDetectHdtPath">
+    <Error Condition="!Exists('$(HdtPath)\HearthstoneDeckTracker.exe')"
+           Text="HearthstoneDeckTracker.exe not found under HdtPath='$(HdtPath)' (auto-detect looks in $(HsbgHdtRoot)\app-*). Run: dotnet build -p:HdtPath=&quot;$(LOCALAPPDATA)\HearthstoneDeckTracker\app-&lt;version&gt;&quot; (or set env HDT_PATH)." />
+    <Message Importance="high" Text="HsbgKansousen: referencing HDT at $(HdtPath)" />
+  </Target>
+</Project>

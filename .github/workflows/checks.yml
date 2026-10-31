@@ -1,0 +1,21 @@
+name: Checks
+
+# The plugin itself is built against an installed Hearthstone Deck Tracker, which CI does not have
+# (see TASKS.md: building in CI needs HDT's release files). Until then CI checks what it can.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Personal data check (built-in patterns; the deny list stays on each developer's PC)
+        run: python3 scripts/check_private.py
+      - name: The schema is valid JSON
+        run: python3 -c "import json; json.load(open('schema/game-log.schema.json', encoding='utf-8'))"
