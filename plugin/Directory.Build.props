@@ -15,6 +15,11 @@
     <LangVersion>10</LangVersion>
     <Nullable>enable</Nullable>
     <Deterministic>true</Deterministic>
+    <!--
+      DLL に手元の絶対パス（ユーザー名を含む）を残さない。PDB のパスと、HDT の Log.* の [CallerFilePath] が
+      埋め込むソースのパスを /_/ 始まりに置き換える（配布 zip の DLL に個人の情報を入れないため）
+    -->
+    <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\'))=/_/</PathMap>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
