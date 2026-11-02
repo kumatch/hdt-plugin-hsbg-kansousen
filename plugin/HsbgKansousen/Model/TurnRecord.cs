@@ -24,7 +24,24 @@ namespace HsbgKansousen.Model
         public List<LobbyEntry>? Lobby { get; set; }
         /// <summary>自分の神祇（Secret Deity の Sigil）。神祇の無いシーズンや取れなければ null。schema 1.2.0 で追加</summary>
         public DeityRecord? Deity { get; set; }
+        /// <summary>
+        /// 自分の甲虫のステータス（甲虫部隊 プレイヤー付与効果 BG31_808pe）。エンチャントが無ければ null。schema 1.7.0 で追加
+        /// </summary>
+        public BuffStatsRecord? Beetle { get; set; }
         public CombatRecord? Combat { get; set; }
+    }
+
+    /// <summary>
+    /// 盤面に乗らない「この対戦中」の強化の大きさ（甲虫など）。プレイヤーに付くエンチャントの値から読む。schema 1.7.0 で追加
+    /// </summary>
+    public sealed class BuffStatsRecord
+    {
+        /// <summary>自分: ショップ終了時（戦闘に持ち込む値）。相手: 戦闘開始時。戦闘中に初めて付いたなら null</summary>
+        public int? Attack { get; set; }
+        public int? Health { get; set; }
+        /// <summary>戦闘終了時（戦闘中に増えた分を含む）</summary>
+        public int? AttackAfterCombat { get; set; }
+        public int? HealthAfterCombat { get; set; }
     }
 
     /// <summary>
@@ -81,6 +98,8 @@ namespace HsbgKansousen.Model
         public BobsBuddyPrediction? BobsBuddy { get; set; }
         /// <summary>相手の神祇。相手の Sigil は戦闘中だけ読める。schema 1.2.0 で追加</summary>
         public DeityRecord? OpponentDeity { get; set; }
+        /// <summary>相手の甲虫。相手のエンチャントは戦闘ごとに複製されるので戦闘中だけ読める。無ければ null。schema 1.7.0 で追加</summary>
+        public BuffStatsRecord? OpponentBeetle { get; set; }
     }
 
     public sealed class BobsBuddyPrediction

@@ -427,3 +427,22 @@ HDT 1.59.3（FileVersion 1.59.3.9015）は 2026-10-14 に自動更新で入っ�
 - 再接続後、HDT は普通に `OnTurnStart` を出す（17:45 のゲームは再接続 6 秒後に T12 の `OnTurnStart(Player)`）。再接続で全 Entity が作り直されるので、
   `UpdateLobby` は再接続中に脱落した相手を見つける（そのときの eliminated_turn は「今のターン − 1」。再接続前に脱落を見ていた相手は前の値のまま）
 - Bob's Buddy の結果は `BobsBuddyInvoker.GetInstance(gameId, turn)` で HDT のゲーム ID ごとに持たれるので、再接続前のターンは前の `GameId` で引く
+
+### 3.20 盤面に乗らない「この対戦中」の強化（2026-11-03、HDT 1.59.7 のソース + 保存済み power.log 182 ゲーム）
+
+甲虫・血の宝石・酒場のミニオン・酒場の呪文の強化は、どれも盤面のミニオンではなくプレイヤー Entity（またはそれに付くエンチャント）に溜まる。
+HDT は 1.59.7 で BG のカウンター（`Hearthstone/CounterSystem/BgCounters/`）と Bob's Buddy の入力（`BobsBuddyInvoker` の `playerAttached` / `pTagTransfer`）でこれらを読む。
+調査は scratchpad のスクリプトで 182 ゲーム（2193 戦闘）の power.log を再生して数えた。
+
+| 強化 | 自分の値の置き場所 | 相手の値（戦闘中だけ） | HDT の読み方 |
+|---|---|---|---|
+| 甲虫（記録済み。schema 1.7.0） | エンチャント `BG31_808pe` の `TAG_SCRIPT_DATA_NUM_1/2`（強化の量）。プレイヤー Entity のタグ 3874 / 3924 も同じ値（203 回で全て一致） | 戦闘ごとに相手のプレイヤー Entity に `BG31_808pe` のコピー（134 戦闘）。`Bacon_TagTransferPlayerE` のタグ 3874 / 3924 にも戦闘開始時の値（126 戦闘） | `BeetlesSizeCounter` = 甲虫 `BG28_603t` の 2/2 + 強化。Bob's Buddy の `BeetlesAtkBuff/HealthBuff` = エンチャントの値 |
+| 血の宝石 | プレイヤー Entity の `BACON_BLOODGEMBUFFATKVALUE`（1844）/ `BACON_BLOODGEMBUFFHEALTHVALUE`（2827）と、エンチャント `BG26_159pe` の `TAG_SCRIPT_DATA_NUM_1/2`。ショップ終了時に 614 回中 604 回一致 | 戦闘ごとに `BG26_159pe` のコピー（558 戦闘）。相手のプレイヤー Entity のタグは前の相手の値が残る。TagTransfer には入らない | `BloodGemCounter` = タグ + 1（血の宝石の基本 +1/+1）。Bob's Buddy はエンチャントとタグの大きい方（どちらも少なく出ることがある、と HDT のコメント） |
+| 酒場のミニオン | エンチャント `BG_ShopBuff`（全ミニオン）/ `BG_ShopBuff_Elemental`（エレメンタル）/ `BG_ShopBuff_MultiRace` の `TAG_SCRIPT_DATA_NUM_1/2`（酒場のミニオンに足される量）。ショップ終了時に 201 / 110 / 97 回。`BG34_854pe`（酒場のランダムな 1 体）は 66 回 | 戦闘ごとに `BG_ShopBuff` のコピー（184 戦闘） | `ElementalTavernBuffStatsCounter`（エレメンタルとノミ）。Bob's Buddy は使わない（戦闘に関係しない） |
+| 酒場の呪文 | プレイヤー Entity の `TAVERN_SPELL_ATTACK_INCREASE`（3989）/ `TAVERN_SPELL_HEALTH_INCREASE`（3990）。エンチャントは無い。ショップ終了時に 606 回 | `Bacon_TagTransferPlayerE` の同じタグ（588 戦闘）。相手のプレイヤー Entity のタグは値が 0 に戻っても更新が来ないことがある（HDT 1.59.7 `TagChangeActions.OnNextOpponentPlayerId` のコメント。Tidecaller Prophet で減ることがある） | `TavernSpellsBuffCounter` = タグの値。Bob's Buddy はタグ（無ければ TagTransfer） |
+
+- `Bacon_TagTransferPlayerE`（"TagTransferPlayerEnchant [DNT]"）は全 2193 戦闘で相手のプレイヤー Entity に付いた。相手の「この対戦中」のカウンターを同じタグ番号で運ぶ（0 のタグは載らない）
+- 相手のエンチャントのコピーは `COPIED_FROM_ENTITY_ID` 付きで相手の制御・相手のプレイヤー Entity に作られ、戦闘の後片付けで `REMOVEDFROMGAME` + `HIDE_ENTITY`（値は残る）。
+  前の戦闘のコピーを拾わないよう、ID（ショップ終了時の最大より大きい）とゾーンで絞る
+- 相手のプレイヤー Entity の名前は戦闘ごとにその相手の名前に変わる（power.log の `TAG_CHANGE Entity=<名前>`）。調査スクリプトもログにも名前は書かない
+- 甲虫の強化を持つ相手は 2193 戦闘中 134 戦闘だけだった。「相手の値が見えない戦闘が多い」のは相手が甲虫を育てていないため

@@ -83,12 +83,14 @@ namespace HsbgKansousen.Tests
                             new LobbyEntry { PlayerId = 3, TavernTier = 2, Health = 30, Armor = 5, LeaderboardPlace = 1, Eliminated = false },
                         },
                         Deity = new DeityRecord { CardId = "BGFYM_000", Name = "C'Thun", DbfId = 130610, Attack = 3703, Health = 3983, AttackAfterCombat = 6187, HealthAfterCombat = 6467, Awakened = true, Golden = false },
+                        Beetle = new BuffStatsRecord { Attack = 42, Health = 42, AttackAfterCombat = 83, HealthAfterCombat = 83 },
                         Combat = new CombatRecord
                         {
                             OpponentPlayerId = 7, OpponentHero = { CardId = "BG20_HERO_283_SKIN_G", Name = "O", DbfId = 7 },
                             OpponentHealth = 30, OpponentArmor = 10, OpponentTavernTier = 2, Result = "win", DamageDealt = 2, DamageTaken = 0,
                             BobsBuddy = new BobsBuddyPrediction { Win = 1, Tie = 0, Loss = 0, Lethal = 0, OpponentLethal = 0, AvgDamage = 2, Simulations = 10000 },
                             OpponentDeity = new DeityRecord { CardId = "BGFYM_000", Name = "C'Thun", DbfId = 130610, Attack = 3578, Health = 3496, AttackAfterCombat = 4626, HealthAfterCombat = 4544, Awakened = false, Golden = null },
+                            OpponentBeetle = new BuffStatsRecord { Attack = 272, Health = 270, AttackAfterCombat = 385, HealthAfterCombat = 383 },
                         },
                     },
                     new TurnRecord { Turn = 2, TavernTier = 1, Health = 60, Armor = 0 },

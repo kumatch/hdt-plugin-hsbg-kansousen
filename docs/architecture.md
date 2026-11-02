@@ -48,11 +48,12 @@ HsbgKansousen/
 │   ├── EntitySnapshotter.cs   # Core.Game.Entities → 盤面/手札/ショップの観測値 (MinionRecord, ShopTick)
 │   ├── HdtCards.cs            # CardId / DbfId → CardRef、Entity → MinionRecord
 │   ├── BobsBuddyReader.cs     # Bob's Buddy の予測値をリフレクションで読む（失敗したら null）
-│   └── DeityReader.cs         # 神祇（シーズンの仕組み）の状態
+│   ├── DeityReader.cs         # 神祇（シーズンの仕組み）の状態
+│   └── BeetleReader.cs        # 甲虫の強化（プレイヤーに付くエンチャント）
 ├── Logic/                     # HDT 非依存の純粋ロジック（単体テスト対象）
 │   ├── ShopActionTracker.cs   # 100ms ごとの観測値の差分から 購入/売却/リロール/ティアアップ/ヒーローパワー/スペル/トリプル を数える
 │   ├── CombatResolver.cs      # ヒーロー被弾イベント列（重複排除）→ 勝敗と与被ダメ
-│   ├── DeityTracker.cs, AbortedGame.cs, Reconnect.cs
+│   ├── DeityTracker.cs, BuffStatsTracker.cs（甲虫）, AbortedGame.cs, Reconnect.cs
 ├── Model/                     # ログの DTO（docs/log-schema.md と 1:1）。HDT の型に依存しない
 ├── Output/                    # HDT 非依存
 │   ├── JsonSettings.cs        # snake_case / null 保持のシリアライズ設定

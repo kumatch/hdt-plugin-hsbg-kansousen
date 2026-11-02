@@ -6,7 +6,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>HsbgKansousen</RootNamespace>
     <AssemblyName>HsbgKansousen</AssemblyName>
-    <Version>0.11.0</Version>
+    <Version>0.12.0</Version>
     <Authors>kumatch</Authors>
     <Product>HsbgKansousen</Product>
     <Description>Hearthstone Battlegrounds game logger plugin for Hearthstone Deck Tracker</Description>
