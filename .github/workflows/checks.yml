@@ -19,3 +19,5 @@ jobs:
         run: python3 scripts/check_private.py
       - name: The schema is valid JSON
         run: python3 -c "import json; json.load(open('schema/game-log.schema.json', encoding='utf-8'))"
+      - name: schema_version has a change history entry (the hsbg-kansousen copies are checked on each PC and in its own CI)
+        run: python3 scripts/check_cli_sync.py
