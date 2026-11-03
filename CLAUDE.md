@@ -76,13 +76,16 @@ scripts/                      # deploy-plugin.ps1, package-plugin.ps1, analyze_s
 
 1. このリポジトリ: `docs/log-schema.md`（改訂履歴と該当の節）、`schema/game-log.schema.json`、`GameLog.CurrentSchemaVersion`、テスト（`SampleLogs.cs` など）
 2. hsbg-kansousen: `hsbg/game-log.schema.json` と `docs/log-schema.md` にこのリポジトリのものをそのままコピーする
-3. hsbg-kansousen: 読み込みを合わせる。新しいキーは `normalize.py` の列（`TURN_COLUMNS` / `COMBAT_COLUMNS` など）とテスト、
+3. hsbg-kansousen: 読み込みを合わせる。`hsbg/loader.py` の `KNOWN_SCHEMA_VERSION` を新しい `schema_version` にし、新しいキーは `normalize.py` の列（`TURN_COLUMNS` / `COMBAT_COLUMNS` など）とテスト、
    列を変えたら `cache.py` の `CACHE_FORMAT` を上げる。分析で注意が要るものは `hsbg/templates/skills/hsbg-analysis/log-caveats.md`、
    過去のログを power.log から埋められるなら補完コマンド（`powerlog.py` + `cli.py` の `backfill-*`）。キーの意味が変わるなら互換処理
 4. 両方の検証コマンドを緑にする（hsbg-kansousen は その `CLAUDE.md` の検証コマンド）。`python scripts\check_cli_sync.py --strict` も緑にする
 5. 作業の区切りの報告では、**両方のリポジトリ**について変更したファイルと推奨するコミットメッセージを出す
 
 hsbg-kansousen の CI も、プラグインの main の schema / `docs/log-schema.md` とコピーが違えば失敗する（push 後の最後の確認）。
+
+リリースでは、ログの版が前のリリースから変わっていれば **hsbg-kansousen を先に** リリースする（docs/development.md「リリースの手順」）。
+番号は両者でそろえず、対応はログの版で決まる（hsbg-kansousen の README「プラグインと hsbg の版」）。
 
 ## 検証コマンド（変更後は必ず緑にする）
 

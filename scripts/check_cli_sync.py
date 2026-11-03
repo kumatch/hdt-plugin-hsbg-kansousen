@@ -8,9 +8,11 @@ What is checked:
   1. hsbg-kansousen's hsbg/game-log.schema.json == schema/game-log.schema.json (as JSON)
   2. hsbg-kansousen's docs/log-schema.md == docs/log-schema.md (line endings ignored)
   3. GameLog.CurrentSchemaVersion has an entry in docs/log-schema.md's change history
+  4. hsbg-kansousen's hsbg/loader.py KNOWN_SCHEMA_VERSION == GameLog.CurrentSchemaVersion
+     (the newest log it reads in full; newer logs are read with their new keys ignored)
 
 Where hsbg-kansousen is: --cli <folder>, else $HSBG_KANSOUSEN_DIR, else a folder named
-hsbg-kansousen next to this repository. When it is not there, 1 and 2 are skipped with a warning
+hsbg-kansousen next to this repository. When it is not there, 1, 2 and 4 are skipped with a warning
 (exit 0), unless --strict is given (exit 1).
 
 Usage (Python 3.12, standard library only; run from the repository root):
@@ -33,6 +35,7 @@ DOC = Path("docs/log-schema.md")
 GAME_LOG_CS = Path("plugin/HsbgKansousen/Model/GameLog.cs")
 CLI_SCHEMA = Path("hsbg/game-log.schema.json")
 CLI_DOC = Path("docs/log-schema.md")
+CLI_LOADER = Path("hsbg/loader.py")
 
 
 def _show(path: Path) -> str:
@@ -54,13 +57,18 @@ def _text(path: Path) -> str:
     return path.read_text(encoding="utf-8").replace("\r\n", "\n")
 
 
-def check_version() -> list[str]:
+def current_version() -> str | None:
     m = re.search(r'CurrentSchemaVersion\s*=\s*"(\d+\.\d+\.\d+)"', _text(ROOT / GAME_LOG_CS))
-    if not m:
+    return m.group(1) if m else None
+
+
+def check_version() -> list[str]:
+    version = current_version()
+    if version is None:
         return [f"{GAME_LOG_CS.as_posix()}: CurrentSchemaVersion not found"]
-    if f"`{m.group(1)}`" not in _text(ROOT / DOC):
+    if f"`{version}`" not in _text(ROOT / DOC):
         return [
-            f"{DOC.as_posix()}: no change history entry for schema {m.group(1)}"
+            f"{DOC.as_posix()}: no change history entry for schema {version}"
             " (GameLog.CurrentSchemaVersion)"
         ]
     return []
@@ -74,6 +82,17 @@ def check_cli(cli: Path) -> list[str]:
         errors.append(f"{_show(cli / CLI_SCHEMA)} differs from {SCHEMA.as_posix()}: copy it over")
     if not (cli / CLI_DOC).is_file() or _text(cli / CLI_DOC) != _text(ROOT / DOC):
         errors.append(f"{_show(cli / CLI_DOC)} differs from {DOC.as_posix()}: copy it over")
+    loader = cli / CLI_LOADER
+    known = re.compile(r'^KNOWN_SCHEMA_VERSION\s*=\s*"([\d.]+)"', re.MULTILINE)
+    m = known.search(_text(loader)) if loader.is_file() else None
+    version = current_version()
+    if m is None:
+        errors.append(f"{_show(loader)}: KNOWN_SCHEMA_VERSION not found")
+    elif version and m.group(1) != version:
+        errors.append(
+            f"{_show(loader)}: KNOWN_SCHEMA_VERSION = {m.group(1)}, but this plugin writes "
+            f"{version} (GameLog.CurrentSchemaVersion): raise it"
+        )
     return errors
 
 

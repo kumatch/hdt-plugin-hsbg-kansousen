@@ -24,6 +24,9 @@ Hearthstone Battlegrounds（BG）の **1 ゲームごとの記録（棋譜）** 
 プラグインが一覧に出ないときは、ダウンロードしたファイルのプロパティで「ブロックの解除」をするか、PowerShell で
 `Unblock-File <ファイル>` を実行してください。
 
+プラグインを新しくしたら、分析ツール hsbg も対応する版以降にしてください（対応表は
+[hsbg-kansousen の README](https://github.com/kumatch/hsbg-kansousen#プラグインと-hsbg-の版)。リリースノートにも書いています）。
+
 リリースノートに、動作を確かめた HDT のバージョンを書いています。HDT の更新で動かなくなったときは Issue で知らせてください。
 
 ## 設定

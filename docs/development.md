@@ -63,6 +63,9 @@ HDT を起動し、Options > Tracker > Plugins で「HsbgKansousen」を有効�
 
 ### リリースの手順
 
+0. ログの版（`GameLog.CurrentSchemaVersion`）が前のリリースから変わったなら、先に hsbg-kansousen を、その版を読める版としてリリースしておく
+   （hsbg-kansousen の `docs/release.md`。`python scripts\check_cli_sync.py --strict` が hsbg の `KNOWN_SCHEMA_VERSION` との一致を見る）。
+   hsbg 0.2.0 以降は新しいログも既知の項目だけで読むが、新しい項目を使うには hsbg の更新が要る
 1. `plugin/HsbgKansousen/HsbgKansousen.csproj` の `<Version>` を上げ、検証コマンドと `python scripts\check_private.py` を緑にして**コミットする**
    （DLL の製品バージョンには、ビルドした時点の HEAD のコミットが `0.11.0+<commit>` の形で入る。コミット前にビルドすると、1 つ前のコミットを名乗る）
 2. `git tag v<version>; git push origin main v<version>`
@@ -71,7 +74,7 @@ HDT を起動し、Options > Tracker > Plugins で「HsbgKansousen」を有効�
 4. 実機の確認は zip で行う: HDT を終了して `Plugins\HsbgKansousen\` を消し、Options > Tracker > Plugins に zip をドロップして 1 ゲーム遊ぶ。
    ビルドは決定的（`Deterministic` + `PathMap`）なので、同じコミットからなら `deploy-plugin.ps1` の DLL も zip の DLL とバイト単位で同じになる
 5. GitHub の Releases でタグを選び、zip、`game-log.schema.json`、`SHA256SUMS.txt` を添付する。リリースノートには
-   ビルドに使った HDT のバージョン、`schema_version`、変更点、インストール手順を書く
+   ビルドに使った HDT のバージョン、`schema_version`、新しい項目を使うのに要る hsbg の版、変更点、インストール手順を書く
 
 DLL に手元の絶対パス（ユーザー名を含む）が入らないよう、`plugin/Directory.Build.props` の `PathMap` で `/_/` に置き換えている
 （PDB のパスと、HDT の `Log.*` の `[CallerFilePath]` が入れるパス）。`package-plugin.ps1` は手元のパスが残っていると止まる。
