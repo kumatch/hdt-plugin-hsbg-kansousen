@@ -11,7 +11,7 @@
 ## 現在の状態
 
 - プラグイン v0.11.0（0.10.x までの名前は HsbgLogger）、ログ schema 1.6.2。動作確認した HDT: 1.59.x
-- 開発中: v0.12.0 / schema 1.7.0（甲虫のステータス。未リリース・実機未確認）
+- 開発中: v0.12.0 / schema 1.7.0（甲虫のステータス。未リリース・実機確認済み）
 - 公開の準備中。v0.11.0 を GitHub Releases に置いた（2026-10-31、HDT 1.59.7 でビルド）。リポジトリの public 化はまだ
 
 ## タスク
@@ -30,7 +30,8 @@
 - [ ] 公開: リポジトリを public にする（最初のリリースと、README の手順の確認の後）。HDT Wiki の Available Plugins への掲載依頼は任意
 - [x] 甲虫のステータス（schema 1.7.0、プラグイン 0.12.0）: `turns[].beetle`（ショップ終了時・戦闘後）と `combat.opponent_beetle`（戦闘中に見えたとき）。
       events.jsonl の `shop_end` / `combat_end` にも。読み方は docs/log-schema.md「甲虫」、調査は docs/hdt-research.md §3.20
-- [ ] 甲虫の実機確認: 甲虫を育てた 1 ゲームで `turns[].beetle` が power.log からの再抽出（hsbg の `powerlog.parse_beetle`）と一致するか、`plugin.log` に警告が無いか
+- [x] 甲虫の実機確認: 甲虫を育てた 1 ゲームで `turns[].beetle` が power.log からの再抽出（hsbg の `powerlog.parse_beetle`）と一致するか、`plugin.log` に警告が無いか
+      （2026-11-03 18:08 のゲーム、HDT 1.59.7: 自分 11 ターン・相手 2 戦闘の全ての値が一致。警告なし。OnUpdate 平均 0.377ms）
 - [ ] 他の「この対戦中」の強化（血の宝石・酒場のミニオン・酒場の呪文）を同じ形で記録するか決める（読み方は docs/hdt-research.md §3.20 で確認済み）
 - [ ] 設定画面に「リリースページを開く」リンク（更新の確認。自動の照会は外部通信になるので入れるなら既定 OFF）
 
