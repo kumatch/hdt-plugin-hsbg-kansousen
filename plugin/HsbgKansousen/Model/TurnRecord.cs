@@ -36,6 +36,8 @@ namespace HsbgKansousen.Model
         public BuffStatsRecord? TavernMinion { get; set; }
         /// <summary>酒場のエレメンタルに足される量（tavern_minion とは別のエンチャント）。無ければ null。schema 1.8.0 で追加</summary>
         public BuffStatsRecord? TavernElemental { get; set; }
+        /// <summary>血の宝石の雨: 酒場を入れ替えた後に酒場のミニオン 1 体ずつに与える血の宝石の量。無ければ null。schema 1.9.0 で追加</summary>
+        public BuffStatsRecord? BloodGemBarrage { get; set; }
         public CombatRecord? Combat { get; set; }
     }
 
@@ -113,6 +115,8 @@ namespace HsbgKansousen.Model
         public BuffStatsRecord? OpponentTavernSpell { get; set; }
         public BuffStatsRecord? OpponentTavernMinion { get; set; }
         public BuffStatsRecord? OpponentTavernElemental { get; set; }
+        /// <summary>相手の血の宝石の雨（turns[].blood_gem_barrage と同じ形）。相手のコピーは作られないので実際には null。schema 1.9.0 で追加</summary>
+        public BuffStatsRecord? OpponentBloodGemBarrage { get; set; }
     }
 
     public sealed class BobsBuddyPrediction

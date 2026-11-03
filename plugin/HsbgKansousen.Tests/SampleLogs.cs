@@ -88,6 +88,7 @@ namespace HsbgKansousen.Tests
                         TavernSpell = new BuffStatsRecord { Attack = 1, Health = 1, AttackAfterCombat = 1, HealthAfterCombat = 1 },
                         TavernMinion = new BuffStatsRecord { Attack = 4, Health = 4, AttackAfterCombat = 4, HealthAfterCombat = 4 },
                         TavernElemental = null,
+                        BloodGemBarrage = new BuffStatsRecord { Attack = 85, Health = 100, AttackAfterCombat = 85, HealthAfterCombat = 100 },
                         Combat = new CombatRecord
                         {
                             OpponentPlayerId = 7, OpponentHero = { CardId = "BG20_HERO_283_SKIN_G", Name = "O", DbfId = 7 },

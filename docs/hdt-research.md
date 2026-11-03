@@ -446,3 +446,43 @@ HDT は 1.59.7 で BG のカウンター（`Hearthstone/CounterSystem/BgCounters
   前の戦闘のコピーを拾わないよう、ID（ショップ終了時の最大より大きい）とゾーンで絞る
 - 相手のプレイヤー Entity の名前は戦闘ごとにその相手の名前に変わる（power.log の `TAG_CHANGE Entity=<名前>`）。調査スクリプトもログにも名前は書かない
 - 甲虫の強化を持つ相手は 2193 戦闘中 134 戦闘だけだった。「相手の値が見えない戦闘が多い」のは相手が甲虫を育てていないため
+
+#### 血の宝石の雨（2026-11-04、保存済み power.log 213 ゲーム。schema 1.9.0 `blood_gem_barrage`）
+
+- 血の宝石の雨（`BG34_689`。「この対戦中に、酒場を入替した後、酒場のミニオン全てに +{0}/+{1} 分の血の宝石を付与する」）を使うと、
+  自分のプレイヤー Entity（`ATTACHED`）にエンチャント `BG34_689e2`（"Blood Gem Barrage Player Ench [DNT]"）が 1 つ付く。
+  2 枚目以降は新しく作られず、同じエンチャントの `TAG_SCRIPT_DATA_NUM_1/2` に足される（例: 1 ゲームで 13 回使い 3/3 → 281/328）
+- 入れ替えのたびに `BG34_689e2` の TRIGGER が、酒場のミニオンそれぞれに `TAG_SCRIPT_DATA_NUM_1/2` = この値の `BG20_GEMe` を付ける
+  （85/100 のとき、酒場に出た 3/2 の刀狩 `BG26_817` が 88/102）。`BG_ShopBuff`（`tavern_minion`）とは別で、そちらには足されない
+- 62 ゲームで現れ、どれも 1 ゲームに 1 つ（自分の分）。相手のコピーは 1 度も作られなかった
+
+#### まだ記録していない、プレイヤーに付くエンチャント（2026-11-04 の洗い出し。今後の候補）
+
+CardDefs の英語名に "Player" を含むエンチャントのうち、保存済みの power.log 213 ゲームに現れたもの（記録済みの 6 種類と、値を持たない
+内部用のもの（`TB_BaconShop_8P_PlayerE`、`TB_BaconShop_3ofKindChecke`、`Bacon_Free_Refresh_Player_Ench`、`BG29_813e` など）を除く）。
+「値あり」は `TAG_SCRIPT_DATA_NUM_1` が 0 以外になったゲームの数。**中身（値の意味、相手のコピーの有無）は未確認**で、記録するならカードごとに確かめる。
+
+| エンチャント | 英語名 | 現れたゲーム | 値あり |
+|---|---|---|---|
+| `BG25_008pe` | Eternal Knight Player Enchant [DNT] | 78 | 72 |
+| `BG31_816pe` | Baller Player Enchant [DNT] | 73 | 21 |
+| `BG25_011pe` | Undead Bonus Attack Player Enchant [DNT] | 72 | 43 |
+| `BG34_170pe` | Volumizer Player Enchant [DNT] | 65 | 0 |
+| `BG36_307pe` | Discard Paired Cards Player Ench [DNT] | 39 | 0 |
+| `BG27_556pe` | Diremuck Player Ench [DNT] | 27 | 23 |
+| `BG_ShopBuff_MultiRace` | MultiRace Shop Buff Player Enchantment (DNT)（Eonar's Favor。値の置き場所が分からず記録しない。上の表） | 24 | 0 |
+| `BG26_805pe` | Humming Bird Player Enchant [DNT] | 21 | 21 |
+| `BG35_150pe` | Fodder Player Enchant [DNT] | 20 | 20 |
+| `BG31_881te2` | Time Management Player Ench [DNT] | 15 | 15 |
+| `BG34_854pe` | Random minion Tavern Minion Buff Player Ench [DNT]（「足される量」ではないので記録しない。上の表） | 15 | 15 |
+| `BG31_873pe2` | Ashen Corruptor Player Ench [DNT] | 13 | 13 |
+| `BGS_018pe` | Goldrinn Player Enchant [DNT] | 13 | 13 |
+| `BG35_MagicItem_701pe` | Fang Anklet Player Enchant [DNT] | 6 | 6 |
+| `BG33_112pe` | Haunted Carapace Player Enchant [DNT] | 2 | 1 |
+| `BGS_Treasures_104pe` | Reserve Prices Player Enchant [DNT] | 2 | 0 |
+| `BG31_HERO_006pe` | Arcane Knowledge Player Ench [DNT] | 2 | 2 |
+| `BG24_Reward_363e` | Ethereal Evidence Player Ench | 1 | 0 |
+| `BG36_MagicItem_216pe` | Greater Eternal Portrait Player Ench [DNT] | 1 | 1 |
+
+数え方: 各ゲームの power.log で、上の CardID の Entity が作られた（`FULL_ENTITY` / `SHOW_ENTITY`）ゲームと、その Entity の
+`TAG_SCRIPT_DATA_NUM_1` が 0 以外になったゲームを数えた（自分の分と相手のコピーを区別していない）

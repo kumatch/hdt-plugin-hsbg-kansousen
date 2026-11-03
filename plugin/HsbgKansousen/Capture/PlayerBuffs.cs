@@ -92,7 +92,20 @@ namespace HsbgKansousen.Capture
             SetOpponent = (c, r) => c.OpponentTavernElemental = r,
         };
 
-        public static readonly PlayerBuffKind[] All = { Beetle, BloodGem, TavernSpell, TavernMinion, TavernElemental };
+        /// <summary>
+        /// 血の宝石の雨（BG34_689）: "Blood Gem Barrage Player Ench [DNT]"。酒場を入れ替えた後に酒場のミニオン 1 体ずつに与える血の宝石の量。
+        /// 使うたびに同じエンチャントへ足される。相手のコピーは作られない（保存済みの power.log 62 ゲームで 0 回）ので、相手の値は実際には null
+        /// </summary>
+        public static readonly PlayerBuffKind BloodGemBarrage = new PlayerBuffKind
+        {
+            Key = "blood_gem_barrage",
+            EnchantCardId = "BG34_689e2",
+            GetPlayer = t => t.BloodGemBarrage,
+            SetPlayer = (t, r) => t.BloodGemBarrage = r,
+            SetOpponent = (c, r) => c.OpponentBloodGemBarrage = r,
+        };
+
+        public static readonly PlayerBuffKind[] All = { Beetle, BloodGem, TavernSpell, TavernMinion, TavernElemental, BloodGemBarrage };
 
         /// <summary>自分のエンチャント。強化が最初に起きたときに作られ、以後ゲーム中ずっとプレイヤー Entity に付いている。</summary>
         public Entity? PlayerEnchant(IEnumerable<Entity> entities, int playerId, int? playerEntityId)
