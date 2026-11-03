@@ -11,7 +11,7 @@
 ## 現在の状態
 
 - プラグイン v0.11.0（0.10.x までの名前は HsbgLogger）、ログ schema 1.6.2。動作確認した HDT: 1.59.x
-- 開発中: v0.13.0 / schema 1.8.0（この対戦中の強化。未リリース。甲虫は 0.12.0 で実機確認済み、ほかは実機未確認）
+- 開発中: v0.13.0 / schema 1.8.0（この対戦中の強化。未リリース。甲虫は 0.12.0 で実機確認済み、血の宝石と相手の値は 0.13.0 で実機確認済み）
 - 公開の準備中。v0.11.0 を GitHub Releases に置いた（2026-10-31、HDT 1.59.7 でビルド）。リポジトリの public 化はまだ
 
 ## タスク
@@ -34,8 +34,9 @@
       （2026-11-03 18:08 のゲーム、HDT 1.59.7: 自分 11 ターン・相手 2 戦闘の全ての値が一致。警告なし。OnUpdate 平均 0.377ms）
 - [x] 他の「この対戦中」の強化（schema 1.8.0、プラグイン 0.13.0）: `blood_gem`・`tavern_spell`・`tavern_minion`・`tavern_elemental` と `opponent_*`。
       甲虫と同じ形・同じ仕組み（`Capture/PlayerBuffs.cs`）。読み方は docs/log-schema.md「この対戦中の強化」
-- [ ] 0.13.0 の実機確認: キルボア（血の宝石）か酒場の呪文を使う 1 ゲームで、4 つのキーが power.log からの再抽出（hsbg の `powerlog.parse_buffs`）と一致するか、
-      甲虫の値が 0.12.0 と変わらないか、`plugin.log` に `CompleteBuffs` の警告が無いか
+- [x] 0.13.0 の実機確認（2026-11-03 22:50 のゲーム。キルボアの構成、9 ターン）: 自分の `blood_gem`（4 ターン）と相手の `opponent_blood_gem` /
+      `opponent_tavern_spell` / `opponent_tavern_minion`（4 戦闘）が power.log からの再抽出（`powerlog.parse_buffs`）とすべて一致。
+      `plugin.log` に警告なし（OnUpdate 平均 0.170 ms）。自分の `tavern_spell` / `tavern_minion` / `tavern_elemental` はこのゲームでは出なかった（読み方は甲虫・血の宝石と同じ）
 - [ ] 設定画面に「リリースページを開く」リンク（更新の確認。自動の照会は外部通信になるので入れるなら既定 OFF）
 
 ## 判明したこと・決めたこと
