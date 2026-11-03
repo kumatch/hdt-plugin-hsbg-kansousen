@@ -16,6 +16,20 @@ namespace HsbgKansousen.Logic
             Health = baseHealth + bonusHealth;
         }
 
+        /// <summary>
+        /// 自分の値: エンチャントの TAG_SCRIPT_DATA_NUM_1/2 とプレイヤー Entity のタグの、成分ごとの大きいほう
+        /// （血の宝石は 2 か所にあり、どちらも少なく出ることがある。HDT 1.59.7 の Bob's Buddy と同じ）。どちらも無ければ null。
+        /// </summary>
+        public static BuffStatsReading? FromSources(int? enchantAttack, int? enchantHealth, int? tagAttack, int? tagHealth,
+            int baseAttack = 0, int baseHealth = 0)
+        {
+            int? a = Max(enchantAttack, tagAttack), h = Max(enchantHealth, tagHealth);
+            if (!a.HasValue || !h.HasValue) return null;
+            return new BuffStatsReading(a.Value, h.Value, baseAttack, baseHealth);
+        }
+
+        private static int? Max(int? x, int? y) => x.HasValue && y.HasValue ? System.Math.Max(x.Value, y.Value) : x ?? y;
+
         /// <summary>エンチャントの TAG_SCRIPT_DATA_NUM_1（強化の量）</summary>
         public int BonusAttack { get; }
         /// <summary>エンチャントの TAG_SCRIPT_DATA_NUM_2</summary>
@@ -30,7 +44,7 @@ namespace HsbgKansousen.Logic
     }
 
     /// <summary>
-    /// 1 戦闘ぶんの強化エンチャントの観測を集める（HDT 非依存。神祇の <see cref="DeityTracker"/> と同じ考え方）。
+    /// 1 戦闘ぶんの強化（エンチャントかプレイヤーのタグ）の観測を集める（HDT 非依存。神祇の <see cref="DeityTracker"/> と同じ考え方）。
     /// 戦闘中は約 100ms ごとに自分と相手のエンチャントを読んで渡す。自分のエンチャントはゲーム中ずっとあり、
     /// 相手のエンチャントは戦闘ごとに複製されるので、相手は最初と最後の値を覚えておく（docs/log-schema.md「甲虫」）。
     /// </summary>

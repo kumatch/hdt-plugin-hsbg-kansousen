@@ -72,11 +72,10 @@ namespace HsbgKansousen.Capture
         private Entity? _playerSigil;
         private Entity? _opponentSigil;
         private DateTime _nextOpponentSigilScan = DateTime.MinValue;
-        // 甲虫（甲虫部隊 プレイヤー付与効果）。神祇と同じく戦闘中は毎 tick 読み、戦闘の確定時に turns[].beetle / combat.opponent_beetle へ
-        private readonly BuffStatsTracker _beetle = new BuffStatsTracker();
-        private Entity? _playerBeetle;
-        private Entity? _opponentBeetle;
-        private DateTime _nextBeetleScan = DateTime.MinValue;
+        // 盤面に乗らない「この対戦中」の強化（甲虫・血の宝石・酒場の呪文・酒場のミニオン）。神祇と同じく戦闘中は毎 tick 読み、
+        // 戦闘の確定時に turns[].<種類> / combat.opponent_<種類> へ
+        private readonly PlayerBuffChannel[] _buffs = PlayerBuffKind.All.Select(k => new PlayerBuffChannel(k)).ToArray();
+        private DateTime _nextBuffScan = DateTime.MinValue;
         /// <summary>ショップ終了時点の最大 Entity ID。これより新しいミニオンが戦闘中に作られたもの（覚醒判定）</summary>
         private int _shopEndMaxEntityId;
 
@@ -499,7 +498,7 @@ namespace HsbgKansousen.Capture
             _playerSigil = null;
             _opponentSigil = null;
             _nextOpponentSigilScan = DateTime.MinValue;
-            ResetBeetle(keepPlayer: false);
+            ResetBuffs(keepPlayer: false);
             _handSourceCache.Clear();
             _resumedAtTurn = lastTurn;
             _resumePending = true;
@@ -598,7 +597,7 @@ namespace HsbgKansousen.Capture
             _interruptedCombatTurn = 0;
             _deity.Reset();
             _opponentSigil = null;
-            ResetBeetle(keepPlayer: true);
+            ResetBuffs(keepPlayer: true);
             var rec = _log!.Turns.FirstOrDefault(t => t.Turn == combatTurn);
             if (rec?.Combat == null || rec.Combat.Result != null) return;
             var c = rec.Combat;
@@ -738,7 +737,7 @@ namespace HsbgKansousen.Capture
             _playerSigil = null;
             _opponentSigil = null;
             _nextOpponentSigilScan = DateTime.MinValue;
-            ResetBeetle(keepPlayer: false);
+            ResetBuffs(keepPlayer: false);
             _shopEndMaxEntityId = 0;
             _tickTotalTicks = 0;
             _tickMaxTicks = 0;
@@ -900,10 +899,13 @@ namespace HsbgKansousen.Capture
             _opponentSigil = null;
             _nextOpponentSigilScan = DateTime.MinValue;
 
-            // 甲虫: 戦闘に持ち込む値。相手のエンチャントは戦闘ごとに複製されるので戦闘中に探す
-            ResetBeetle(keepPlayer: false);
-            _playerBeetle = BeetleReader.PlayerEnchant(ents, game.Player.Id, game.PlayerEntity?.Id);
-            rec.Beetle = BuffStatsTracker.AtShopEnd(BeetleReader.Read(_playerBeetle));
+            // この対戦中の強化: 戦闘に持ち込む値。相手の値は戦闘ごとに作られるので戦闘中に探す
+            ResetBuffs(keepPlayer: false);
+            foreach (var b in _buffs)
+            {
+                b.PlayerEnchant = b.Kind.PlayerEnchant(ents, game.Player.Id, game.PlayerEntity?.Id);
+                b.Kind.SetPlayer(rec, BuffStatsTracker.AtShopEnd(b.Kind.ReadPlayer(b.PlayerEnchant, game.PlayerEntity)));
+            }
 
             // 戦闘レコードの器（相手ヒーローと盤面は戦闘フェーズ開始時に埋める）
             rec.Combat ??= new CombatRecord();
@@ -926,10 +928,12 @@ namespace HsbgKansousen.Capture
                 fields.Add(F("deity_attack", rec.Deity.Attack));
                 fields.Add(F("deity_health", rec.Deity.Health));
             }
-            if (rec.Beetle != null)
+            foreach (var b in _buffs)
             {
-                fields.Add(F("beetle_attack", rec.Beetle.Attack));
-                fields.Add(F("beetle_health", rec.Beetle.Health));
+                var r = b.Kind.GetPlayer(rec);
+                if (r == null) continue;
+                fields.Add(F(b.Kind.Key + "_attack", r.Attack));
+                fields.Add(F(b.Kind.Key + "_health", r.Health));
             }
             Emit("shop_end", turn, fields.ToArray());
         }
@@ -1088,67 +1092,79 @@ namespace HsbgKansousen.Capture
             if (combat)
             {
                 ObserveDeity(game);
-                ObserveBeetle(game);
+                ObserveBuffs(game);
             }
         }
 
         /// <summary>
-        /// 戦闘中の毎 tick: 自分と相手の甲虫のエンチャントを読む（戦闘中の「この対戦中」の強化を追う）。
-        /// 相手のエンチャントは戦闘ごとに複製されるので、見つかるまで 300ms ごとに探す。相手に甲虫の強化が無ければ作られない。
+        /// 戦闘中の毎 tick: 自分と相手の「この対戦中」の強化を読む（戦闘中にも伸びる）。
+        /// 相手の値の入れ物は戦闘ごとに作られるので、見つかるまで 300ms ごとに探す（相手にその強化が無ければ作られない）。
         /// 自分のエンチャントがショップ終了時に無かったときも、戦闘中に初めて作られることがあるので同じく探す。
         /// </summary>
-        private void ObserveBeetle(GameV2 game)
+        private void ObserveBuffs(GameV2 game)
         {
-            if (_playerBeetle != null)
-                _beetle.ObservePlayer(BeetleReader.Read(_playerBeetle));
-            if (_opponentBeetle != null)
-                _beetle.ObserveOpponent(BeetleReader.Read(_opponentBeetle));
-            if ((_playerBeetle != null && _opponentBeetle != null) || DateTime.Now < _nextBeetleScan) return;
-            _nextBeetleScan = DateTime.Now.AddMilliseconds(300);
+            var pe = game.PlayerEntity;
+            foreach (var b in _buffs)
+            {
+                b.Tracker.ObservePlayer(b.Kind.ReadPlayer(b.PlayerEnchant, pe));
+                if (b.OpponentSource != null)
+                    b.Tracker.ObserveOpponent(b.Kind.ReadOpponent(b.OpponentSource));
+            }
+            if (DateTime.Now < _nextBuffScan || !_buffs.Any(b => b.NeedsScan)) return;
+            _nextBuffScan = DateTime.Now.AddMilliseconds(300);
             var ents = EntitySnapshotter.SafeEntities(game);
-            _playerBeetle ??= BeetleReader.PlayerEnchant(ents, game.Player.Id, game.PlayerEntity?.Id);
-            _opponentBeetle ??= BeetleReader.OpponentEnchant(ents, game.Opponent.Id, _shopEndMaxEntityId);
+            foreach (var b in _buffs)
+            {
+                b.PlayerEnchant ??= b.Kind.PlayerEnchant(ents, game.Player.Id, pe?.Id);
+                b.OpponentSource ??= b.Kind.OpponentSource(ents, game.Opponent.Id, _shopEndMaxEntityId);
+            }
         }
 
-        /// <summary>戦闘の確定時: 自分の戦闘後の値と相手の値を turns[].beetle / combat.opponent_beetle に書く。</summary>
-        private void CompleteBeetle(GameV2 game, TurnRecord rec, List<KeyValuePair<string, object?>> fields)
+        /// <summary>戦闘の確定時: 自分の戦闘後の値と相手の値を turns[].<種類> / combat.opponent_<種類> に書く。</summary>
+        private void CompleteBuffs(GameV2 game, TurnRecord rec, List<KeyValuePair<string, object?>> fields)
         {
             try
             {
-                var fallback = BeetleReader.Read(_playerBeetle
-                    ?? BeetleReader.PlayerEnchant(EntitySnapshotter.SafeEntities(game), game.Player.Id, game.PlayerEntity?.Id));
-                rec.Beetle = _beetle.CompletePlayer(rec.Beetle, fallback);
-                if (rec.Beetle != null)
+                List<Entity>? ents = null;
+                foreach (var b in _buffs)
                 {
-                    fields.Add(F("beetle_attack_after", rec.Beetle.AttackAfterCombat));
-                    fields.Add(F("beetle_health_after", rec.Beetle.HealthAfterCombat));
-                }
-                var opp = rec.Combat!.OpponentBeetle = _beetle.OpponentRecord();
-                if (opp != null)
-                {
-                    fields.Add(F("opponent_beetle_attack", opp.Attack));
-                    fields.Add(F("opponent_beetle_health", opp.Health));
-                    fields.Add(F("opponent_beetle_attack_after", opp.AttackAfterCombat));
-                    fields.Add(F("opponent_beetle_health_after", opp.HealthAfterCombat));
+                    var enchant = b.PlayerEnchant;
+                    if (enchant == null && b.Kind.EnchantCardId != null)
+                        enchant = b.Kind.PlayerEnchant(ents ??= EntitySnapshotter.SafeEntities(game), game.Player.Id, game.PlayerEntity?.Id);
+                    var mine = b.Tracker.CompletePlayer(b.Kind.GetPlayer(rec), b.Kind.ReadPlayer(enchant, game.PlayerEntity));
+                    b.Kind.SetPlayer(rec, mine);
+                    if (mine != null)
+                    {
+                        fields.Add(F(b.Kind.Key + "_attack_after", mine.AttackAfterCombat));
+                        fields.Add(F(b.Kind.Key + "_health_after", mine.HealthAfterCombat));
+                    }
+                    var opp = b.Tracker.OpponentRecord();
+                    b.Kind.SetOpponent(rec.Combat!, opp);
+                    if (opp != null)
+                    {
+                        fields.Add(F("opponent_" + b.Kind.Key + "_attack", opp.Attack));
+                        fields.Add(F("opponent_" + b.Kind.Key + "_health", opp.Health));
+                        fields.Add(F("opponent_" + b.Kind.Key + "_attack_after", opp.AttackAfterCombat));
+                        fields.Add(F("opponent_" + b.Kind.Key + "_health_after", opp.HealthAfterCombat));
+                    }
                 }
             }
             catch (Exception ex)
             {
-                PluginLogger.Warn("CompleteBeetle: " + ex.Message);
+                PluginLogger.Warn("CompleteBuffs: " + ex.Message);
             }
             finally
             {
-                ResetBeetle(keepPlayer: true);
+                ResetBuffs(keepPlayer: true);
             }
         }
 
-        /// <summary>甲虫の戦闘中の観測を捨てる。<paramref name="keepPlayer"/> なら自分のエンチャント（ゲーム中ずっとある）は覚えておく。</summary>
-        private void ResetBeetle(bool keepPlayer)
+        /// <summary>強化の戦闘中の観測を捨てる。<paramref name="keepPlayer"/> なら自分のエンチャント（ゲーム中ずっとある）は覚えておく。</summary>
+        private void ResetBuffs(bool keepPlayer)
         {
-            _beetle.Reset();
-            _opponentBeetle = null;
-            _nextBeetleScan = DateTime.MinValue;
-            if (!keepPlayer) _playerBeetle = null;
+            foreach (var b in _buffs)
+                b.Reset(keepPlayer);
+            _nextBuffScan = DateTime.MinValue;
         }
 
         /// <summary>
@@ -1284,7 +1300,7 @@ namespace HsbgKansousen.Capture
                 F("result", outcome.Result), F("damage_dealt", outcome.DamageDealt), F("damage_taken", outcome.DamageTaken),
             };
             CompleteDeity(game, rec, fields);
-            CompleteBeetle(game, rec, fields);
+            CompleteBuffs(game, rec, fields);
             Emit("combat_end", combatTurn, fields.ToArray());
 
             if (crossCheck && hero != null && hero.HasTag(GameTag.BACON_WON_LAST_COMBAT) && outcome.Result != "tie")

@@ -10,7 +10,7 @@ namespace HsbgKansousen.Model
 
     public sealed class GameLog
     {
-        public const string CurrentSchemaVersion = "1.7.0";
+        public const string CurrentSchemaVersion = "1.8.0";
 
         public string SchemaVersion { get; set; } = CurrentSchemaVersion;
         /// <summary>"complete" | "incomplete" | "not_battlegrounds"</summary>

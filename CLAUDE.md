@@ -36,7 +36,7 @@ plugin/
 ├── HsbgKansousen.sln, Directory.Build.props（HdtPath）
 ├── HsbgKansousen/
 │   ├── HsbgKansousenPlugin.cs   # IPlugin。GameEvents の登録はここだけ
-│   ├── Capture/              # HDT の型に触る唯一の層: GameSession, EntitySnapshotter, HdtCards, BobsBuddyReader, DeityReader, BeetleReader
+│   ├── Capture/              # HDT の型に触る唯一の層: GameSession, EntitySnapshotter, HdtCards, BobsBuddyReader, DeityReader, PlayerBuffs
 │   ├── Logic/                # HDT 非依存の純粋ロジック: ShopActionTracker, CombatResolver, DeityTracker, BuffStatsTracker, AbortedGame, Reconnect
 │   ├── Model/                # docs/log-schema.md の DTO
 │   ├── Output/               # GameLogWriter, EventsJsonlWriter, PowerLogWriter, PartialLogJournal, JsonSettings

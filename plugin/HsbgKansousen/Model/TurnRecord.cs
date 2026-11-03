@@ -28,11 +28,19 @@ namespace HsbgKansousen.Model
         /// 自分の甲虫のステータス（甲虫部隊 プレイヤー付与効果 BG31_808pe）。エンチャントが無ければ null。schema 1.7.0 で追加
         /// </summary>
         public BuffStatsRecord? Beetle { get; set; }
+        /// <summary>血の宝石 1 個が与える攻撃力・体力（基本の +1/+1 を含む）。強化が無ければ null。schema 1.8.0 で追加</summary>
+        public BuffStatsRecord? BloodGem { get; set; }
+        /// <summary>酒場の呪文が与える攻撃力・体力に足される量（TAVERN_SPELL_*_INCREASE）。0/0 なら null。schema 1.8.0 で追加</summary>
+        public BuffStatsRecord? TavernSpell { get; set; }
+        /// <summary>酒場のミニオンに足される量（Shop Buff Player Enchant）。無ければ null。schema 1.8.0 で追加</summary>
+        public BuffStatsRecord? TavernMinion { get; set; }
+        /// <summary>酒場のエレメンタルに足される量（tavern_minion とは別のエンチャント）。無ければ null。schema 1.8.0 で追加</summary>
+        public BuffStatsRecord? TavernElemental { get; set; }
         public CombatRecord? Combat { get; set; }
     }
 
     /// <summary>
-    /// 盤面に乗らない「この対戦中」の強化の大きさ（甲虫など）。プレイヤーに付くエンチャントの値から読む。schema 1.7.0 で追加
+    /// 盤面に乗らない「この対戦中」の強化の大きさ（甲虫、血の宝石、酒場の呪文・ミニオン）。プレイヤーに付くエンチャントかプレイヤーのタグから読む。schema 1.7.0 で追加
     /// </summary>
     public sealed class BuffStatsRecord
     {
@@ -100,6 +108,11 @@ namespace HsbgKansousen.Model
         public DeityRecord? OpponentDeity { get; set; }
         /// <summary>相手の甲虫。相手のエンチャントは戦闘ごとに複製されるので戦闘中だけ読める。無ければ null。schema 1.7.0 で追加</summary>
         public BuffStatsRecord? OpponentBeetle { get; set; }
+        /// <summary>相手の血の宝石・酒場の呪文・酒場のミニオン・酒場のエレメンタル（turns[] の同名と同じ形）。見えなければ null。schema 1.8.0 で追加</summary>
+        public BuffStatsRecord? OpponentBloodGem { get; set; }
+        public BuffStatsRecord? OpponentTavernSpell { get; set; }
+        public BuffStatsRecord? OpponentTavernMinion { get; set; }
+        public BuffStatsRecord? OpponentTavernElemental { get; set; }
     }
 
     public sealed class BobsBuddyPrediction

@@ -49,7 +49,7 @@ HsbgKansousen/
 │   ├── HdtCards.cs            # CardId / DbfId → CardRef、Entity → MinionRecord
 │   ├── BobsBuddyReader.cs     # Bob's Buddy の予測値をリフレクションで読む（失敗したら null）
 │   ├── DeityReader.cs         # 神祇（シーズンの仕組み）の状態
-│   └── BeetleReader.cs        # 甲虫の強化（プレイヤーに付くエンチャント）
+│   └── PlayerBuffs.cs         # この対戦中の強化（甲虫・血の宝石・酒場の呪文・酒場のミニオン）の読み方
 ├── Logic/                     # HDT 非依存の純粋ロジック（単体テスト対象）
 │   ├── ShopActionTracker.cs   # 100ms ごとの観測値の差分から 購入/売却/リロール/ティアアップ/ヒーローパワー/スペル/トリプル を数える
 │   ├── CombatResolver.cs      # ヒーロー被弾イベント列（重複排除）→ 勝敗と与被ダメ

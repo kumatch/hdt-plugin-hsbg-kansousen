@@ -84,6 +84,10 @@ namespace HsbgKansousen.Tests
                         },
                         Deity = new DeityRecord { CardId = "BGFYM_000", Name = "C'Thun", DbfId = 130610, Attack = 3703, Health = 3983, AttackAfterCombat = 6187, HealthAfterCombat = 6467, Awakened = true, Golden = false },
                         Beetle = new BuffStatsRecord { Attack = 42, Health = 42, AttackAfterCombat = 83, HealthAfterCombat = 83 },
+                        BloodGem = new BuffStatsRecord { Attack = 6, Health = 7, AttackAfterCombat = 6, HealthAfterCombat = 7 },
+                        TavernSpell = new BuffStatsRecord { Attack = 1, Health = 1, AttackAfterCombat = 1, HealthAfterCombat = 1 },
+                        TavernMinion = new BuffStatsRecord { Attack = 4, Health = 4, AttackAfterCombat = 4, HealthAfterCombat = 4 },
+                        TavernElemental = null,
                         Combat = new CombatRecord
                         {
                             OpponentPlayerId = 7, OpponentHero = { CardId = "BG20_HERO_283_SKIN_G", Name = "O", DbfId = 7 },
@@ -91,6 +95,9 @@ namespace HsbgKansousen.Tests
                             BobsBuddy = new BobsBuddyPrediction { Win = 1, Tie = 0, Loss = 0, Lethal = 0, OpponentLethal = 0, AvgDamage = 2, Simulations = 10000 },
                             OpponentDeity = new DeityRecord { CardId = "BGFYM_000", Name = "C'Thun", DbfId = 130610, Attack = 3578, Health = 3496, AttackAfterCombat = 4626, HealthAfterCombat = 4544, Awakened = false, Golden = null },
                             OpponentBeetle = new BuffStatsRecord { Attack = 272, Health = 270, AttackAfterCombat = 385, HealthAfterCombat = 383 },
+                            OpponentBloodGem = new BuffStatsRecord { Attack = 5, Health = 4, AttackAfterCombat = 5, HealthAfterCombat = 4 },
+                            OpponentTavernSpell = new BuffStatsRecord { Attack = 23, Health = 16, AttackAfterCombat = 23, HealthAfterCombat = 16 },
+                            OpponentTavernMinion = new BuffStatsRecord { Attack = 40, Health = 80, AttackAfterCombat = 40, HealthAfterCombat = 80 },
                         },
                     },
                     new TurnRecord { Turn = 2, TavernTier = 1, Health = 60, Armor = 0 },

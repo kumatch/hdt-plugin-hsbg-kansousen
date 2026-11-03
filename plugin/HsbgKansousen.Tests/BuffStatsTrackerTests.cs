@@ -28,6 +28,28 @@ namespace HsbgKansousen.Tests
         }
 
         [Fact]
+        public void FromSources_BloodGem_TakesLargerPerStat_AndAddsBase()
+        {
+            // 2026-10-12 14:53 のゲームの T9: プレイヤーのタグ 4/5、エンチャント 2/4（エンチャントが少なく出ていた）
+            var r = BuffStatsReading.FromSources(2, 4, 4, 5, 1, 1)!.Value;
+            Assert.Equal(5, r.Attack);
+            Assert.Equal(6, r.Health);
+            var mixed = BuffStatsReading.FromSources(6, 1, 3, 3, 1, 1)!.Value;
+            Assert.Equal((7, 4), (mixed.Attack, mixed.Health));
+        }
+
+        [Fact]
+        public void FromSources_OnlyOneSource()
+        {
+            // 酒場の呪文はタグだけ、甲虫・酒場のミニオンはエンチャントだけ
+            Assert.Equal(3, BuffStatsReading.FromSources(null, null, 3, 2)!.Value.Attack);
+            Assert.Equal(6, BuffStatsReading.FromSources(4, 4, null, null, 2, 2)!.Value.Attack);
+            Assert.Null(BuffStatsReading.FromSources(null, null, null, null));
+            // タグが 0（強化なし）なら空。AtShopEnd で null になる
+            Assert.Null(BuffStatsTracker.AtShopEnd(BuffStatsReading.FromSources(null, null, 0, 0)));
+        }
+
+        [Fact]
         public void AtShopEnd_NoEnchant_IsNull()
         {
             Assert.Null(BuffStatsTracker.AtShopEnd(null));
