@@ -41,8 +41,13 @@
       `plugin.log` に警告なし（OnUpdate 平均 0.170 ms）。自分の `tavern_spell` / `tavern_minion` / `tavern_elemental` はこのゲームでは出なかった（読み方は甲虫・血の宝石と同じ）
 - [x] v0.13.0 のリリース（2026-11-04）: 先に hsbg 0.2.0 をリリースしてから。zip を README の手順で入れて 1 ゲーム確認済み
       （zip・Plugins・ビルドの DLL の SHA-256 が一致、ログは schema 1.8.0 で hsbg 0.2.0 が読める。戦闘中に初めて付いた血の宝石も power.log と一致）
-- [ ] 血の宝石の雨（schema 1.9.0、プラグイン 0.14.0）: `blood_gem_barrage` と `opponent_blood_gem_barrage`。実装済み・実機未確認。
-      実機確認: 血の宝石の雨を使う 1 ゲームで、power.log からの再抽出（hsbg の `powerlog.parse_buffs`）と一致するか
+- [x] 血の宝石の雨（schema 1.9.0、プラグイン 0.14.0）: `blood_gem_barrage` と `opponent_blood_gem_barrage`。
+      実機確認（2026-11-05 23:40 のゲーム、HDT 1.59.9）: `blood_gem_barrage`（T9・T10 の 3/4）は power.log からの再抽出と一致、警告なし
+- [x] ゲーム終了時の最後の戦闘の強化: 上のゲームで、最後の戦闘の終わり際（負けが決まる 0.02 秒前）に伸びた `tavern_minion`（28/14 → 46/23）と
+      `opponent_blood_gem`（12/11 → 14/12）の戦闘後の値を tick で拾えていなかった（プラグインが記録した 13 ゲームでほかに食い違いは無い）。
+      ゲーム終了時の確定では今の値も観測するように直した（`GameSession.CompleteBuffs` の `gameEnd`）。直した版で 2026-11-06 00:11 のゲーム（9 ターン）を確認:
+      全ターンが power.log からの再抽出と一致（最後の戦闘で伸びた `tavern_spell` 4/2 → 6/2 を含む）、警告なし。
+      神祇（`CompleteDeity`）も同じ作りなので、必要なら同じ直し方をする
 - [ ] （調査・今は対応しない）まだ記録していないプレイヤーのエンチャント（Eternal Knight、Undead Bonus Attack、Baller など）。
       一覧は docs/hdt-research.md §3.20「まだ記録していない、プレイヤーに付くエンチャント」。記録するならカードごとに値の意味を確かめる
 - [ ] 設定画面に「リリースページを開く」リンク（更新の確認。自動の照会は外部通信になるので入れるなら既定 OFF）

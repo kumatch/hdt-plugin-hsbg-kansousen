@@ -265,7 +265,7 @@ namespace HsbgKansousen.Capture
                         FlushShopActions(game, turn);
                     var interrupted = _combatTurn > 0 && _combatTurn == _interruptedCombatTurn;
                     if (!interrupted)
-                        ResolveCombat(game, _combatTurn > 0 ? _combatTurn : turn, hero, crossCheck: false);
+                        ResolveCombat(game, _combatTurn > 0 ? _combatTurn : turn, hero, crossCheck: false, gameEnd: true);
                     ReadBobsBuddy(game, turn);
 
                     FinalizeHero(game, hero, turn);
@@ -1120,8 +1120,12 @@ namespace HsbgKansousen.Capture
             }
         }
 
-        /// <summary>戦闘の確定時: 自分の戦闘後の値と相手の値を turns[].<種類> / combat.opponent_<種類> に書く。</summary>
-        private void CompleteBuffs(GameV2 game, TurnRecord rec, List<KeyValuePair<string, object?>> fields)
+        /// <summary>
+        /// 戦闘の確定時: 自分の戦闘後の値と相手の値を turns[].<種類> / combat.opponent_<種類> に書く。
+        /// 普段は戦闘中の最後の tick の値を使う（確定は次のショップの開始時で、そのときの値はショップでの変化を含みうる）。
+        /// <paramref name="gameEnd"/> のときは次のショップが無いので、今の値（最後の戦闘の終わり際に伸びた分を含む）も観測してから確定する。
+        /// </summary>
+        private void CompleteBuffs(GameV2 game, TurnRecord rec, List<KeyValuePair<string, object?>> fields, bool gameEnd)
         {
             try
             {
@@ -1131,7 +1135,14 @@ namespace HsbgKansousen.Capture
                     var enchant = b.PlayerEnchant;
                     if (enchant == null && b.Kind.EnchantCardId != null)
                         enchant = b.Kind.PlayerEnchant(ents ??= EntitySnapshotter.SafeEntities(game), game.Player.Id, game.PlayerEntity?.Id);
-                    var mine = b.Tracker.CompletePlayer(b.Kind.GetPlayer(rec), b.Kind.ReadPlayer(enchant, game.PlayerEntity));
+                    var current = b.Kind.ReadPlayer(enchant, game.PlayerEntity);
+                    if (gameEnd)
+                    {
+                        b.Tracker.ObservePlayer(current);
+                        if (b.OpponentSource != null)
+                            b.Tracker.ObserveOpponent(b.Kind.ReadOpponent(b.OpponentSource));
+                    }
+                    var mine = b.Tracker.CompletePlayer(b.Kind.GetPlayer(rec), current);
                     b.Kind.SetPlayer(rec, mine);
                     if (mine != null)
                     {
@@ -1285,7 +1296,8 @@ namespace HsbgKansousen.Capture
             }
         }
 
-        private void ResolveCombat(GameV2 game, int combatTurn, Entity? hero, bool crossCheck)
+        /// <param name="gameEnd">ゲーム終了時に最後の戦闘を確定する。最後の戦闘の終わり際の変化は tick で拾えないことがあるので、強化は今の値も観測する</param>
+        private void ResolveCombat(GameV2 game, int combatTurn, Entity? hero, bool crossCheck, bool gameEnd = false)
         {
             if (combatTurn <= 0) return;
             var rec = _log!.Turns.FirstOrDefault(t => t.Turn == combatTurn);
@@ -1300,7 +1312,7 @@ namespace HsbgKansousen.Capture
                 F("result", outcome.Result), F("damage_dealt", outcome.DamageDealt), F("damage_taken", outcome.DamageTaken),
             };
             CompleteDeity(game, rec, fields);
-            CompleteBuffs(game, rec, fields);
+            CompleteBuffs(game, rec, fields, gameEnd);
             Emit("combat_end", combatTurn, fields.ToArray());
 
             if (crossCheck && hero != null && hero.HasTag(GameTag.BACON_WON_LAST_COMBAT) && outcome.Result != "tie")
