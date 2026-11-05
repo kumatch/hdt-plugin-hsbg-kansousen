@@ -2,7 +2,7 @@
 
 プラグインをソースからビルドし、自分の HDT で動かすまでの手順です。使うだけなら README のインストール手順（Releases の zip）で足ります。
 
-> **WSL は使いません。** HDT プラグインは .NET Framework 4.7.2 / WPF のアセンブリを参照するため、ビルドも実行も Windows ネイティブでしか成立しません。
+> **WSL は使いません。** HDT プラグインは .NET Framework 4.7.2 / WPF のアセンブリを参照するため、ビルドも実行も Windows ネイティブでしかできません。
 
 ## 0. macOS / Linux に慣れた人向けの Windows メモ
 
@@ -17,11 +17,11 @@
 | `open .` | `explorer .` または `ii .` | |
 | `which` | `Get-Command` / `where.exe` | |
 
-改行コード: リポジトリの `.gitattributes`（`* text=auto eol=lf`）に加えて、`git config --global core.autocrlf false` にしておくと崩れません。
+改行コード: リポジトリの `.gitattributes`（`* text=auto eol=lf`）に加えて、`git config --global core.autocrlf false` にしておくと、改行が CRLF に変わりません。
 
 ## 1. 必須ソフト
 
-すべて PowerShell で（管理者権限は不要。SmartScreen で聞かれたら「実行」）。
+次のコマンドはすべて PowerShell で実行します。管理者権限はいりません。SmartScreen で確認されたら「実行」を選びます。
 
 ```powershell
 winget install Microsoft.WindowsTerminal
@@ -63,11 +63,11 @@ HDT を起動し、Options > Tracker > Plugins で「HsbgKansousen」を有効�
 
 ### リリースの手順
 
-0. ログの版（`GameLog.CurrentSchemaVersion`）が前のリリースから変わったなら、先に hsbg-kansousen を、その版を読める版としてリリースしておく
+0. ログの版（`GameLog.CurrentSchemaVersion`）が前のリリースから変わったなら、先に、そのログの版を読める hsbg-kansousen をリリースしておく
    （hsbg-kansousen の `docs/release.md`。`python scripts\check_cli_sync.py --strict` が hsbg の `KNOWN_SCHEMA_VERSION` との一致を見る）。
    hsbg 0.2.0 以降は新しいログも既知の項目だけで読むが、新しい項目を使うには hsbg の更新が要る
-1. `plugin/HsbgKansousen/HsbgKansousen.csproj` の `<Version>` を上げ、検証コマンドと `python scripts\check_private.py` を緑にして**コミットする**
-   （DLL の製品バージョンには、ビルドした時点の HEAD のコミットが `0.11.0+<commit>` の形で入る。コミット前にビルドすると、1 つ前のコミットを名乗る）
+1. `plugin/HsbgKansousen/HsbgKansousen.csproj` の `<Version>` を上げ、検証コマンドと `python scripts\check_private.py` を緑にして**コミットする**。
+   DLL の製品バージョンには、ビルドした時点の HEAD のコミットが `0.11.0+<commit>` の形で入るので、コミット前にビルドすると 1 つ前のコミットが入る
 2. `git tag v<version>; git push origin main v<version>`
 3. `.\scripts\package-plugin.ps1` → `dist\HsbgKansousen-<version>.zip`。`schema\game-log.schema.json` を `dist\` に写し、2 つの SHA-256 を `SHA256SUMS.txt` に書く
    （`<hash>  <ファイル名>` の形。`(Get-FileHash <file> -Algorithm SHA256).Hash.ToLower()`）

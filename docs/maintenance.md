@@ -7,21 +7,21 @@
 | R1 | HDT のアップデートで内部 API（`GameV2`, `GameStats`, `GameEvents`）が変わりプラグインが読み込めない/落ちる | ログが取れない | HDT の自動更新を許容しつつ、起動時にプラグインが例外を出したら `plugin.log` に HDT バージョンと例外を残す。インストール済みの版と同じコミットの HDT ソース（docs/hdt-research.md §3 の探し方）で再確認して修正。`Capture/` に HDT 依存を閉じ込めているので修正範囲は限定的 |
 | R2 | Hearthstone のパッチで GameTag の意味・Power.log の形式が変わる | 一部フィールドが `null` になる、または誤値 | フィールド単位で `null` 許容。`notes[]` に警告。Power.log を補助ファイルとして残しているので後から再抽出可能 |
 | R3 | 新ヒーロー・新メカニクス（新トリンケット等）の未対応 | 該当フィールドが `null` | `card_id` は未知でも記録する。名前解決は HDT の HearthDb に任せる |
-| R4 | プラグインが HDT のパフォーマンスを落とす | ゲーム体験の悪化 | `OnUpdate` は差分検出のみ。I/O は非同期。Phase 3 の受け入れ基準に処理時間を含める |
+| R4 | プラグインが HDT のパフォーマンスを落とす | ゲーム体験の悪化 | `OnUpdate` は差分検出のみ。I/O は非同期。HDT は 1 回の処理が 2000ms を超えると `hdt_log.txt` に警告を書くので、それが出ていないかを見る（docs/hdt-research.md §3.2） |
 | R5 | ゲーム中のクラッシュでログ消失 | データ欠損 | 部分ログジャーナル + events.jsonl 逐次書き込み |
-| R6 | MMR の試合後値が取れない | Q1（MMR 推移）の欠損 | 遅延ポーリング。取れなければ次ゲームの `mmr_before` から逆算（分析側で補完、`estimated_` 扱い） |
+| R6 | MMR の試合後値が取れない | MMR の推移が欠ける | ゲーム終了後に最大 `mmr_after_wait_sec`（既定 30 秒）ポーリングする。取れなければ `BgsLastGames.xml` から読み（`notes[]` に `mmr_after taken from BgsLastGames.xml`）、それでも無ければ `mmr_after` を null にして `notes[]` に `mmr_after unavailable` を残す |
 | R7 | Blizzard の利用規約 | アカウントリスク | HDT が公式に許容されている「ログファイル読み取り」の範囲内に留める。メモリ読み取り・自動操作は絶対にしない |
 | R8 | 個人情報 | 公開時の懸念 | ログには BattleTag 等を含めない（プレイヤー ID は HDT 内部の数値のみ）。相手プレイヤー名も記録しない |
 | R9 | Windows 環境の不慣れによる作業停滞 | 開発の遅延 | docs/development.md のトラブルシュート。Claude Code への指示を PowerShell ベースで統一 |
 | R10 | Duos モードでのスキーマ不一致 | ログの解釈ミス | `game.variant` で区別。MVP は solo のみ対象、Duos は `status` を complete にしつつ `notes` に未対応を記す |
-| R11 | ダッシュボードが意図せず LAN に公開される / 外部へ通信する | ログの露出 | `.streamlit/config.toml` で `127.0.0.1` bind と利用統計 OFF を固定。Phase 5b の受け入れ基準で LISTEN アドレスを確認 |
-| R12 | HDT の `CardDefs\CardDefs.jaJP.xml` / `CardDefs.base.xml` が無い・形式が変わる（HDT の内部ファイルで公式 API ではない） | カード名が英語（ログの名前）に戻る、スキンの正規化が正規表現フォールバックになる | `cards.py` は読めなければ空の表を返し、表示は英語で続行する。ダッシュボードのサイドバーに「カード名: 英語」と出る。形式が変わったら `analysis/tests/fixtures/carddefs/` を作り直してテストで検出する |
+| R11 | hsbg-kansousen のダッシュボード（`hsbg serve`）が意図せず LAN に公開される / 外部へ通信する | ログの露出 | hsbg-kansousen の `.streamlit/config.toml` で `127.0.0.1` での待ち受けと利用統計 OFF を固定し、`hsbg serve` も同じ値を起動時の引数で渡す |
+| R12 | HDT の `CardDefs\CardDefs.jaJP.xml` / `CardDefs.base.xml` が無い・形式が変わる（HDT の内部ファイルで公式 API ではない） | カード名が英語（ログの名前）に戻る、スキンの正規化が正規表現フォールバックになる | hsbg-kansousen の `hsbg/cards.py` は読めなければ空の表を返し、表示は英語で続行する。ダッシュボードのサイドバーに「カード名: 英語」と出る。形式が変わったら hsbg-kansousen の `tests/fixtures/carddefs/` を作り直してテストで検出する |
 
 ## 2. 運用ルーチン
 
 ### 日常
 - HDT を起動してから Hearthstone を起動する（順序が逆でも HDT は追従するが、ゲーム開始前に起動しておく）
-- 週に一度 `uv run hsbg validate` で incomplete の件数と警告を確認
+- 週に一度 `hsbg validate` で incomplete の件数と警告を確認
 
 ### Hearthstone のパッチ後
 1. BG を 1 ゲームプレイ
@@ -60,11 +60,13 @@ HDT が起動時に CardDefs を更新するので、プロジェクト側の作
 - `Documents\HSBG-Logs\` はクラウド同期フォルダ（OneDrive 等）に置くか、定期的に zip する。プラグインはファイルを追記/新規作成しかしないので同期との相性は良い
 
 ## 4. スキーマ変更の手順
-1. docs/log-schema.md を更新し `schema_version` を上げる（互換性のない変更は major）
-2. `schema/game-log.schema.json` を更新
-3. `analysis/hsbg/loader.py` に旧バージョンからの変換を追加
-4. プラグインの `plugin_version` も上げる
-5. `HsbgKansousen.Tests` と `analysis/tests` の fixtures に新旧両方を置く
+詳しくは `CLAUDE.md`「ログの形を変えたとき」。hsbg-kansousen にも同じ作業の中で反映する。
+1. docs/log-schema.md（改訂履歴と該当の節）を更新し `schema_version` を上げる（互換性のない変更は major。hsbg は major 1 だけを読む）
+2. `schema/game-log.schema.json`、`GameLog.CurrentSchemaVersion`、`HsbgKansousen.Tests`（`SampleLogs.cs` など）を揃える
+3. プラグインの `plugin/HsbgKansousen/HsbgKansousen.csproj` の `<Version>` を上げる
+4. hsbg-kansousen の `hsbg/game-log.schema.json` と `docs/log-schema.md` にこのリポジトリのものをコピーし、`hsbg/loader.py` の `KNOWN_SCHEMA_VERSION` を新しい版にする。
+   新しいキーは `normalize.py` の列とテストに足し、列を変えたら `cache.py` の `CACHE_FORMAT` を上げる。キーの意味が変わるなら互換処理を入れる
+5. 両方の検証コマンドと `python scripts\check_cli_sync.py --strict` を緑にする
 
 ## 5. 意思決定の記録（ADR 風）
 

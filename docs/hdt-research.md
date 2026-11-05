@@ -219,7 +219,7 @@ HDT の `HandleGameEnd` の順序（`GameEventHandler.cs` 788〜）:
 4. `await SaveReplays()`（STATE COMPLETE 待ち → `BattlegroundsRatingAfter` 取得 → HSReplay アップロード）
 5. `RecordBattlegroundsGame()` → **`BgsLastGames.xml` に追記**（§3.10）
 
-→ **プラグインの方針**: `OnGameEnd` で `CurrentGameStats` の参照を保持し、順位は自分で `PLAYER_LEADERBOARD_PLACE` から取る。`BattlegroundsRatingAfter` は同じオブジェクトが後から更新されるので、`OnUpdate` で最大 ~20 秒ポーリングして 0 以外になったら JSON を上書きする（docs/architecture.md §2.4 の設計どおり）。それでも 0 なら `BgsLastGames.xml` を `StartTime` で引く（フォールバック）。
+→ **プラグインの方針**: `OnGameEnd` で `CurrentGameStats` の参照を保持し、順位は自分で `PLAYER_LEADERBOARD_PLACE` から取る。`BattlegroundsRatingAfter` は同じオブジェクトが後から更新されるので、`OnUpdate` で最大 30 秒（設定 `mmr_after_wait_sec`）ポーリングして 0 以外になったら JSON を上書きする（docs/architecture.md §2.4 の設計どおり）。それでも 0 なら `BgsLastGames.xml` を `StartTime` で引く（フォールバック）。
 
 ### 3.6 BG 関連 GameTag の実名と数値（確認済み: HearthDb.dll 36.6.0 をリフレクションで列挙 + Power.log 実物）
 
@@ -311,7 +311,7 @@ HDT 自身は **HearthDb に名前の無いタグ `(GameTag)2022` と `(GameTag)
 ビルド中に判明した **HDT の API 上の落とし穴**（`API/ActionList.cs`）:
 - `GameEvents.*` の `ActionList` には **`Remove` が無い**。`Add(action)` は `new StackTrace().GetFrame(1)` で **呼び出し元メソッドの型** を取り、それが `IPlugin` 実装クラスと一致したときだけ「そのプラグインのハンドラ」として記録する。プラグインが無効化されると、次のイベント実行時に HDT がそのハンドラを外す
 - したがって **`GameEvents.*.Add(...)` は `IPlugin` 実装クラスのメソッド内から直接呼ぶ**。別クラス（`Capture/GameSession` 等）に登録を委譲すると紐付かず、無効化後も呼ばれ続ける。docs/architecture.md §2.2 の「`HsbgKansousenPlugin.cs` はイベント登録/解除のみ」はこの制約とも整合する
-- `OnUnload` ではハンドラを外せないので、ロジック側に `Enabled` フラグを持たせて無害化する
+- `OnUnload` ではハンドラを外せないので、ロジック側に `Enabled` フラグを持たせ、無効化の後はハンドラが何もしないようにする
 - 各ハンドラの実行時間が 2000ms を超えると警告ログが出る（`PluginManager.MaxPluginExecutionTime`）。ハンドラ内の例外は HDT が捕捉してログに書くが、自前でも捕捉する
 
 ### 3.13 docs/architecture.md・docs/log-schema.md への反映事項（Phase 1 で確定したこと）
@@ -320,7 +320,7 @@ HDT 自身は **HearthDb に名前の無いタグ `(GameTag)2022` と `(GameTag)
 |---|---|
 | docs/architecture.md §2.1 | BG 判定は `Core.Game.IsBattlegroundsMatch`（Solo/Duos の区別は `IsBattlegroundsSoloMatch` / `IsBattlegroundsDuosMatch`） |
 | docs/architecture.md §2.3 | 戦闘開始 = `IsBattlegroundsCombatPhase` の false→true（`OnUpdate` 監視）または `OnTurnStart(ActivePlayer.Opponent)`。戦闘終了 = `OnTurnStart(ActivePlayer.Player)`。ヒーロー確定 = `BattlegroundsHeroPickState.PickedHeroDbfId` または `Player.Hero` |
-| docs/architecture.md §2.4 | `mmr_after` は `OnGameEnd` 時点では 0。同じ `GameStats` オブジェクトをポーリング（最大 ~20 秒）→ それでも 0 なら `BgsLastGames.xml` から補完 |
+| docs/architecture.md §2.4 | `mmr_after` は `OnGameEnd` 時点では 0。同じ `GameStats` オブジェクトをポーリング（最大 30 秒。設定 `mmr_after_wait_sec`）→ それでも 0 なら `BgsLastGames.xml` から補完 |
 | docs/architecture.md §2.2 `PowerLogExtractor` | Power.log ファイルを切り出すのではなく `Core.Game.PowerLog`（List<string>）を書き出す。HDT の Replays 機能は BG で使えない |
 | docs/log-schema.md `power.log` | 「HDT の Replays 機能で同等物が得られるなら」の但し書きを削除し、`Core.Game.PowerLog` 由来と明記（1-9 で反映） |
 | docs/log-schema.md `bobs_buddy` | リフレクション経由のオプション。null 許容のまま |
@@ -353,7 +353,7 @@ HDT 自身は **HearthDb に名前の無いタグ `(GameTag)2022` と `(GameTag)
 - **ターン番号**: `GetTurnNumber()` は 1〜12 で GameEntity `TURN` の奇数=ショップ/偶数=戦闘と整合。`GameStats.Turns=12`
 - **HP/ダメージの整合**: 被ダメ 3/8/12/15/15/15、与ダメ 2/5/5/10/10/15 が各ターンの自 HP 差分・相手 HP と一致。ターン 10 のアーマー 5 は被ダメ 15 のうち 5 を吸収（HP 37→27）
 - **順位タグ**: `PLAYER_LEADERBOARD_PLACE` はゲーム中「現在のリーダーボード順位」（HP 順）。自分は 11 ターン目まで 1 位表示、12 ターン目開始で 5 位、敗退で 6 位確定
-- **Entity 数**: ターン 12 で約 2,500（REMOVEDFROMGAME が 2,100）。全 Entity ダンプはスパイク限定とし、本番は盤面・ヒーローだけをスナップショットする
+- **Entity 数**: ターン 12 で約 2,500（REMOVEDFROMGAME が 2,100）。全 Entity ダンプは調査用（`spike_dump`）だけにし、通常の記録では盤面とヒーローだけをスナップショットする
 - **Bob's Buddy**: 12 ターンすべてで前ターン分の Output を取得できた。戦闘開始時点ではまだ null（シミュレーション中）
 - **未定義タグ**: `TAG_1037`, `TAG_1068`, `TAG_4901`, `TAG_3085`, `TAG_479` など HearthDb 36.6.0 に名前の無いタグが多数あるが、必要な情報はすべて名前付きタグで足りた
 - **プレイヤー名**: プレイヤー Entity の `Name` は BattleTag、ヒーロー Entity の `Name` は日本語カード名（クライアントのロケール）。ログには `card_id` と HDT の `Card.Name`（英語）を書き、BattleTag は書かない
@@ -389,7 +389,7 @@ GitHub の master に `v1.58.4`（`964e069d`）〜`v1.58.10`（`3e4ba05d`）の�
   1.58.9 / 1.58.10 で遊んだ 10-07 以降のゲームで `plugin.log` に警告・エラーは無く、Bob's Buddy もリフレクションで毎ターン取れている（`simulations` = 10000。`BobsBuddy.Simulation.Output` の
   `winRate` / `tieRate` / `lossRate` / `theirDeathRate` / `myDeathRate` / `avDamage` / `simulationCount` は残っている）
 - MMR: `fc3c8424`（1.58.9）で `BattlegroundsRatingInfo` のキャッシュを試合後に更新、`63cc322b`（1.58.6）でヒーロー選択中の投了でも試合後 MMR を読む。
-  プラグインは `GameStats.BattlegroundsRatingAfter` を読むだけなので変更不要（取れる場面が増える方向）
+  プラグインは `GameStats.BattlegroundsRatingAfter` を読むだけなので変更は要らない。試合後 MMR を取れる場面は増える
 - 表示の変更: BG のミニオンに勝鬨（`GameTag.BACON_RALLY`）のアイコン（`d8c6516f`）、`DIVINE_SHIELD > 1` を「強化された聖なる盾」として表示（`61ce4957`。プラグインは 0.8.0 から枚数を記録済み）。
   → **プラグイン 0.9.0 でミニオンの `keywords` に `rally` と `deathrattle` を追加**（schema 1.5.0。タイタス・天空孵りの脱走者など、断末魔・勝鬨を倍にするカードの分析用）
 - `LogEvents.OnPowerGamestateLogLine`（`c0d59d64`、1.58.7）: Power.log の GameState 行を 1 行ずつ渡すイベント。ショップ行動を「推定」ではなく `BLOCK_START BlockType=PLAY` などから正確に取れる可能性があるが、
@@ -432,7 +432,7 @@ HDT 1.59.3（FileVersion 1.59.3.9015）は 2026-10-14 に自動更新で入っ�
 
 甲虫・血の宝石・酒場のミニオン・酒場の呪文の強化は、どれも盤面のミニオンではなくプレイヤー Entity（またはそれに付くエンチャント）に溜まる。
 HDT は 1.59.7 で BG のカウンター（`Hearthstone/CounterSystem/BgCounters/`）と Bob's Buddy の入力（`BobsBuddyInvoker` の `playerAttached` / `pTagTransfer`）でこれらを読む。
-調査は scratchpad のスクリプトで 182 ゲーム（2193 戦闘）の power.log を再生して数えた。
+調査は作業用のスクリプトで 182 ゲーム（2193 戦闘）の power.log を再生して数えた。
 
 | 強化 | 自分の値の置き場所 | 相手の値（戦闘中だけ） | HDT の読み方 |
 |---|---|---|---|

@@ -15,8 +15,8 @@ Hearthstone Battlegrounds（BG）の **1 ゲームごとの記録（棋譜）** 
 
 ## インストール
 
-1. [Releases](https://github.com/kumatch/hdt-plugin-hsbg-kansousen/releases) から最新の `HsbgKansousen-<version>.zip` をダウンロードする
-   （zip ごとでよい。展開しない）
+1. [Releases](https://github.com/kumatch/hdt-plugin-hsbg-kansousen/releases) から最新の `HsbgKansousen-<version>.zip` をダウンロードする。
+   zip は展開せず、そのまま次の手順で使う
 2. HDT を起動し、Options > Tracker > Plugins の画面に zip をドラッグ & ドロップする
 3. HDT を再起動し、同じ画面で「HsbgKansousen」にチェックを入れる
 4. BG を 1 ゲーム遊ぶと、`%USERPROFILE%\Documents\HSBG-Logs\YYYY\MM\` に記録ができます
@@ -24,8 +24,8 @@ Hearthstone Battlegrounds（BG）の **1 ゲームごとの記録（棋譜）** 
 プラグインが一覧に出ないときは、ダウンロードしたファイルのプロパティで「ブロックの解除」をするか、PowerShell で
 `Unblock-File <ファイル>` を実行してください。
 
-プラグインを新しくしたら、分析ツール hsbg も対応する版以降にしてください（対応表は
-[hsbg-kansousen の README](https://github.com/kumatch/hsbg-kansousen#プラグインと-hsbg-の版)。リリースノートにも書いています）。
+プラグインを新しくしたら、分析ツール hsbg も対応する版以降にしてください。対応表は
+[hsbg-kansousen の README](https://github.com/kumatch/hsbg-kansousen#プラグインと-hsbg-の版) にあり、リリースノートにも書いています。
 
 リリースノートに、動作を確かめた HDT のバージョンを書いています。HDT の更新で動かなくなったときは Issue で知らせてください。
 
@@ -34,9 +34,9 @@ Hearthstone Battlegrounds（BG）の **1 ゲームごとの記録（棋譜）** 
 Options > Tracker > Plugins の「Settings」ボタン（または HDT の Plugins メニューの「HsbgKansousen」）で設定画面を開きます。
 
 - **ログの保存先**（既定 `%USERPROFILE%\Documents\HSBG-Logs`）
-- events.jsonl（ショップの操作の時系列）、Power.log の写し、その gzip 圧縮、ショップ終了時の手札の記録の ON / OFF
+- ON / OFF の切り替え: events.jsonl（ショップの操作の時系列）、Power.log の写し、写しの gzip 圧縮、ショップ終了時の手札の記録
 
-変更は次のゲームから効きます。設定ファイルは `%APPDATA%\HearthstoneDeckTracker\HsbgKansousen\config.json` です。
+変更は次のゲームから反映されます。設定ファイルは `%APPDATA%\HearthstoneDeckTracker\HsbgKansousen\config.json` です。
 
 > **注意**: Power.log の写し（`*.power.log.gz`）には、同じロビーの全員の BattleTag が入っています。
 > Issue などで人に渡さないでください。記録を共有するときは `.json` だけを、`scripts/anonymize_log.py` で日時・MMR を置き換えてから渡してください。
